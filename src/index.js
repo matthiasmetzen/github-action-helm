@@ -4965,18 +4965,33 @@ function getHelmfileArgsFromInput() {
         .filter(function (key) { return core_1.getInput(key) !== ''; })
         .map(function (key) { return "--" + key + "=" + core_1.getInput(key); });
 }
+function getPluginsFromInput() {
+  let plugins = core_1.getInput('plugins');
+  let pluginList = [];
+  try {
+    pluginList = JSON.parse(plugins);
+  }
+  catch(e) {
+    pluginList = [plugins];
+  }
+
+  return pluginList.map(e => {
+    if(typeof(e) == 'string') 
+      return {url: e};
+    return e;
+  }).filter(e => e.url);
+}
+
 var homeDir = index_1.getHomeDir();
 var binDir = index_1.getBinDir();
 var workspaceDir = index_1.getWorkspaceDir();
 var cacheDir = path_1.join(homeDir, '.cache');
 var helmCacheDir = path_1.join(cacheDir, 'helm');
 var platform = index_1.getOsPlatform();
-var plugins = new Map()
-    .set('diff', new URL('https://github.com/databus23/helm-diff'))
-    .set('secrets', new URL('https://github.com/zendesk/helm-secrets'));
+
 function run() {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-        var helmVersion, helmfileVersion, repositoryConfig, helmfileConfig, helmUrl, helmfileUrl, repositoryConfigPath, helmfileConfigPath, pluginUrls, repositoryArgs, _i, pluginUrls_1, url, globalArgs, _a, _b, error_1;
+        var helmVersion, helmfileVersion, repositoryConfig, helmfileConfig, helmUrl, helmfileUrl, repositoryConfigPath, helmfileConfigPath, pluginList, repositoryArgs, _i, pluginList_1, plugin, globalArgs, _a, _b, error_1;
         return tslib_1.__generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
@@ -4988,10 +5003,7 @@ function run() {
                     helmfileUrl = "https://github.com/roboll/helmfile/releases/download/v" + helmfileVersion + "/helmfile_" + platform + "_amd64";
                     repositoryConfigPath = path_1.join(workspaceDir, repositoryConfig);
                     helmfileConfigPath = path_1.join(workspaceDir, helmfileConfig);
-                    pluginUrls = core_1.getInput('plugins')
-                        .split(',')
-                        .filter(function (name) { return plugins.has(name); })
-                        .map(function (name) { return plugins.get(name); });
+                    pluginList = getPluginsFromInput();
                     _c.label = 1;
                 case 1:
                     _c.trys.push([1, 17, , 18]);
@@ -5005,12 +5017,16 @@ function run() {
                     return [4, index_1.download(helmUrl, path_1.join(binDir, 'helm'))];
                 case 4:
                     _c.sent();
-                    _i = 0, pluginUrls_1 = pluginUrls;
+                    _i = 0, pluginList_1 = pluginList;
                     _c.label = 5;
                 case 5:
-                    if (!(_i < pluginUrls_1.length)) return [3, 8];
-                    url = pluginUrls_1[_i];
-                    return [4, exec_1.exec('helm', ['plugin', 'install', url.toString()])["catch"](core_1.info)];
+                    if (!(_i < pluginList_1.length)) return [3, 8];
+                    plugin = pluginList_1[_i];
+                    let cmd = [4, exec_1.exec('helm', ['plugin', 'install', plugin.url.toString()])["catch"](core_1.info)];
+                    if(plugin.version) {
+                      cmd.push('--version', plugin.version);
+                    }
+                    return cmd;
                 case 6:
                     _c.sent();
                     _c.label = 7;
