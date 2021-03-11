@@ -47,5 +47,5 @@ inputs:
     description: Helm plugins to install
 outputs: {}
 runs:
-  using: node12
-  main: src/index.js
+  using: docker
+  image: Dockerfile
