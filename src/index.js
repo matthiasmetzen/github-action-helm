@@ -137,7 +137,7 @@ function mv(source, dest, options = {}) {
             }
         }
         yield mkdirP(path.dirname(dest));
-        yield ioUtil.rename(source, dest);
+        yield ioUtil.copyFile(source, dest);
     });
 }
 exports.mv = mv;
